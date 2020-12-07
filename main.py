@@ -3,9 +3,11 @@
 
 # TensorFlow and tf.keras
 import tensorflow as tf
-import tensorflow.keras
+
 import tensorflow.keras as keras
 from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers
+from tensorflow.python.keras import Sequential
 
 #Helper libraries
 import numpy as np
@@ -19,24 +21,39 @@ import matplotlib.pyplot as plt
 #class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
 #               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 
+
 datagen = ImageDataGenerator(rescale = 1/255)
 train_iterator = datagen.flow_from_directory('data/train/', class_mode='binary', target_size=(128, 72), color_mode='grayscale')
 validation_iterator = datagen.flow_from_directory('data/validation/', class_mode='binary', target_size=(128, 72), color_mode='grayscale')
 test_iterator = datagen.flow_from_directory('data/test/', class_mode='binary', target_size=(128, 72), color_mode='grayscale')
 
 #set up the layers
-model = tf.keras.Sequential([
-    tf.keras.layers.Flatten(input_shape=(128, 72)),
-    tf.keras.layers.Dense(9216, activation='relu'),
-    tf.keras.layers.Dense(2)
-])
+# model = tf.keras.Sequential([
+#     tf.keras.layers.Flatten(input_shape=(128, 72)),
+#     tf.keras.layers.Dense(9216, activation='relu'),
+#     tf.keras.layers.Dense(2)
+# ])
 
-print(model.layers[0].input_shape)
-print(model.layers[0].output_shape)
-print(model.layers[1].input_shape)
-print(model.layers[1].output_shape)
-print(model.layers[2].input_shape)
-print(model.layers[2].output_shape)
+model = Sequential()
+#model.add(tf.keras.layers.BatchNormalization())
+model.add(tf.keras.layers.Conv2D(32, (5, 5), activation='relu', input_shape=(128,72,1)))
+model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+model.add(tf.keras.layers.Conv2D(64, (5, 5), activation='relu'))
+model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+model.add(tf.keras.layers.Flatten())
+model.add(tf.keras.layers.Dense(1000, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(500, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(250, activation='relu'))
+#model.add(tf.keras.layers.Dense(2,activation='softmax'))
+
+# print(model.layers[0].input_shape)
+# print(model.layers[0].output_shape)
+# print(model.layers[1].input_shape)
+# print(model.layers[1].output_shape)
+# print(model.layers[2].input_shape)
+# print(model.layers[2].output_shape)
 
 
 
@@ -48,7 +65,14 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 #train the model
-model.fit(train_iterator, epochs=10, validation_data=validation_iterator)
+history = model.fit(train_iterator, epochs=15, validation_data=validation_iterator)
 
+for i in range(len(history.history["val_accuracy"])):
+    plt.scatter(x=i, y=history.history["val_accuracy"][i])
+
+plt.show()
+
+print(history.history)
+print(history.history['val_accuracy'])
 #loss = model.evaluate_generator(test_iterator, steps=24)
 #print('\nloss:', loss)
